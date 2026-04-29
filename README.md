@@ -1,8 +1,8 @@
 # 🗞️ 3DNews RAG System
 
 RAG-система для поиска и ответов по новостям 3DNews с использованием:
-- **LLM**: `qwen3.5:4b` через Ollama
-- **Embeddings**: `nomic-embed-text` через Ollama  
+- **LLM**: `qwen2.5:1.5b` через Ollama
+- **Embeddings**: `evilfreelancer/enbeddrus` через Ollama  
 - **Vector DB**: Qdrant с гибридным поиском (Dense + Sparse)
 - **API**: FastAPI
 
