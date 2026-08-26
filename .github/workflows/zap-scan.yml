@@ -1,0 +1,41 @@
+name: ZAP Security Scan
+
+on:
+  workflow_dispatch:        # <-- запуск только вручную из интерфейса GitHub
+  # schedule:               # (опционально) можно добавить расписание, например, раз в неделю
+  #   - cron: '0 0 * * 0'   # каждое воскресенье в 00:00
+
+jobs:
+  zap-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start services with docker-compose
+        run: docker-compose up -d
+
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API at http://localhost:8000/health..."
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health | grep 200 && exit 0
+            echo "Attempt $i/30 - not ready yet..."
+            sleep 5
+          done
+          echo "API did not become ready in time" && exit 1
+
+      - name: Run ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.9.0
+        with:
+          target: 'http://localhost:8000/openapi.json'
+          format: 'openapi'
+          cmd_options: '-z "-config api.excludeurls=.*/health.*"'   # исключить /health из активного сканирования
+
+      - name: Upload ZAP report
+        if: always()   # сохранять отчёт даже при ошибке сканирования
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: report.html
